@@ -776,3 +776,64 @@ body {
 .hidden-element {
     display: none;
 }
+
+/* Light Theme Variables Override */
+body.light-theme {
+    --bg-dark: #f8fafc;
+    --bg-card: rgba(255, 255, 255, 0.7);
+    --border-color: rgba(15, 23, 42, 0.08);
+    --border-hover: rgba(15, 23, 42, 0.16);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+}
+
+body.light-theme .glow-bg {
+    opacity: 0.08;
+}
+
+body.light-theme .search-box input {
+    background: rgba(255, 255, 255, 0.8);
+    color: #0f172a;
+    border-color: rgba(15, 23, 42, 0.12);
+}
+
+body.light-theme .search-box input::placeholder {
+    color: #94a3b8;
+}
+
+body.light-theme .filter-badge {
+    background: rgba(15, 23, 42, 0.04);
+}
+
+body.light-theme .filter-badge:hover {
+    background: rgba(15, 23, 42, 0.08);
+    color: #0f172a;
+}
+
+body.light-theme .selection-context {
+    background: rgba(15, 23, 42, 0.03);
+}
+
+body.light-theme .tweet-input-wrapper {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+body.light-theme .tweet-input-wrapper textarea {
+    color: #0f172a;
+}
+
+body.light-theme .tweet-preview-content {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+body.light-theme .tweet-preview-body-text {
+    color: #0f172a;
+}
+
+body.light-theme .logo-text h1 {
+    background: linear-gradient(to right, #0f172a, #475569);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}

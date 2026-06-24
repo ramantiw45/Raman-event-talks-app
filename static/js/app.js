@@ -20,12 +20,30 @@ const contextDate = composerContext.querySelector('.context-date');
 const contextTextPreview = composerContext.querySelector('.context-text-preview');
 const tagButtons = document.querySelectorAll('.tag-btn');
 const toast = document.getElementById('toast');
+const themeToggle = document.getElementById('theme-toggle');
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     fetchReleaseNotes();
     setupEventListeners();
 });
+
+// Load theme from localStorage
+function initTheme() {
+    const currentTheme = localStorage.getItem('theme') || 'dark';
+    if (currentTheme === 'light') {
+        document.body.classList.add('light-theme');
+        if (themeToggle) {
+            themeToggle.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        }
+    } else {
+        document.body.classList.remove('light-theme');
+        if (themeToggle) {
+            themeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        }
+    }
+}
 
 // Event Listeners setup
 function setupEventListeners() {
@@ -83,6 +101,22 @@ function setupEventListeners() {
     const btnExport = document.getElementById('btn-export');
     if (btnExport) {
         btnExport.addEventListener('click', exportFilteredToCSV);
+    }
+
+    // Theme toggle button
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const isLight = document.body.classList.toggle('light-theme');
+            if (isLight) {
+                localStorage.setItem('theme', 'light');
+                themeToggle.innerHTML = '<i class="fa-solid fa-moon"></i>';
+                showToast('Switched to Light Mode');
+            } else {
+                localStorage.setItem('theme', 'dark');
+                themeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
+                showToast('Switched to Dark Mode');
+            }
+        });
     }
 }
 
