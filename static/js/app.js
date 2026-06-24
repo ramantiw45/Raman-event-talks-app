@@ -78,6 +78,12 @@ function setupEventListeners() {
             showToast('Opening Twitter/X compose window...');
         }
     });
+
+    // Export CSV button
+    const btnExport = document.getElementById('btn-export');
+    if (btnExport) {
+        btnExport.addEventListener('click', exportFilteredToCSV);
+    }
 }
 
 // Fetch release notes from backend Flask API
@@ -249,7 +255,10 @@ function renderFeed(updates) {
                     <div class="update-content">
                         ${update.rawHtml}
                     </div>
-                    <div class="card-actions">
+                    <div class="card-actions" style="gap: 0.5rem;">
+                        <button class="btn btn-secondary" onclick="copyUpdateText('${update.id}', this)" title="Copy description to clipboard" style="padding: 0.4rem 0.75rem; font-size: 0.85rem;">
+                            <i class="fa-solid fa-copy"></i> Copy
+                        </button>
                         <button class="btn btn-select-update ${isSelected ? 'selected' : ''}" onclick="selectUpdateForTweet('${update.id}')">
                             <i class="fa-solid ${isSelected ? 'fa-check' : 'fa-plus'}"></i> 
                             ${isSelected ? 'Selected' : 'Select to Tweet'}
@@ -379,4 +388,86 @@ function showToast(message, isError = false) {
     setTimeout(() => {
         toast.classList.add('hidden');
     }, 4000);
+}
+
+// Copy specific update details to clipboard
+window.copyUpdateText = function(id, buttonEl) {
+    const update = allUpdates.find(u => u.id === id);
+    if (!update) return;
+    
+    const textToCopy = `[${update.date}] BigQuery ${update.type}:\n${update.plainText}\n\nRelease details: ${update.link}`;
+    
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        showToast('Copied to clipboard!');
+        const originalHtml = buttonEl.innerHTML;
+        buttonEl.innerHTML = `<i class="fa-solid fa-check" style="color: var(--color-feature)"></i> Copied`;
+        setTimeout(() => {
+            buttonEl.innerHTML = originalHtml;
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        showToast('Failed to copy to clipboard', true);
+    });
+};
+
+// Export currently filtered list to CSV
+function exportFilteredToCSV() {
+    const searchQuery = searchInput.value.toLowerCase().trim();
+    const activeBadge = document.querySelector('.filter-badge.active');
+    const filterType = activeBadge ? activeBadge.dataset.type : 'all';
+    
+    const filtered = allUpdates.filter(update => {
+        const matchesSearch = searchQuery === '' || 
+            update.plainText.toLowerCase().includes(searchQuery) ||
+            update.type.toLowerCase().includes(searchQuery) ||
+            update.date.toLowerCase().includes(searchQuery);
+            
+        let matchesType = true;
+        if (filterType !== 'all') {
+            const uType = update.type.toLowerCase();
+            if (filterType === 'other') {
+                matchesType = !['feature', 'change', 'deprecated'].includes(uType);
+            } else {
+                matchesType = uType === filterType;
+            }
+        }
+        return matchesSearch && matchesType;
+    });
+
+    if (filtered.length === 0) {
+        showToast('No updates to export', true);
+        return;
+    }
+
+    const headers = ['Date', 'Type', 'Link', 'Description'];
+    const csvRows = [headers.join(',')];
+
+    filtered.forEach(update => {
+        const cleanDesc = update.plainText
+            .replace(/"/g, '""') // Escape double quotes
+            .replace(/\n/g, ' ')  // Replace newlines with spaces
+            .trim();
+        
+        const row = [
+            `"${update.date}"`,
+            `"${update.type}"`,
+            `"${update.link}"`,
+            `"${cleanDesc}"`
+        ];
+        csvRows.push(row.join(','));
+    });
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `bigquery_release_notes_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast('CSV export downloaded!');
 }

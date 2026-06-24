@@ -188,6 +188,18 @@ body {
     box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
 }
 
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+}
+
 .btn-accent {
     background: var(--color-accent);
     color: white;
