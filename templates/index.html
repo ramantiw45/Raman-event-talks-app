@@ -28,7 +28,8 @@
                     <p>Official Release Notes Feed & Social Sharing Hub</p>
                 </div>
             </div>
-            <div class="actions-area">
+            <div class="actions-area" style="display: flex; align-items: center; gap: 0.75rem;">
+                <span id="fetch-time" style="font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-mono);"></span>
                 <button id="theme-toggle" class="btn btn-secondary" title="Toggle Light/Dark Mode" style="border-radius: 50%; padding: 0.75rem; width: 42px; height: 42px; display: inline-flex; justify-content: center; align-items: center;">
                     <i class="fa-solid fa-sun"></i>
                 </button>
@@ -52,6 +53,7 @@
                     <div class="search-box">
                         <i class="fa-solid fa-magnifying-glass search-icon"></i>
                         <input type="text" id="search-input" placeholder="Search updates (e.g. pipeline, vector, analytics)...">
+                        <i class="fa-solid fa-circle-xmark search-clear-icon hidden" id="search-clear" title="Clear Search" style="position: absolute; right: 1rem; cursor: pointer; color: var(--text-muted); font-size: 1.1rem; transition: var(--transition-smooth);"></i>
                     </div>
                     <div class="filter-box">
                         <span class="filter-label">Filter by type:</span>
@@ -91,6 +93,16 @@
                                 <span class="context-date">June 23, 2026</span>
                             </div>
                             <p class="context-text-preview"></p>
+                        </div>
+                    </div>
+
+                    <!-- Tweet Templates Selection -->
+                    <div class="template-selector-wrapper">
+                        <span class="helper-title">Tweet Style:</span>
+                        <div class="template-badges">
+                            <button class="template-badge active" data-style="detailed">Detailed</button>
+                            <button class="template-badge" data-style="punchy">Punchy</button>
+                            <button class="template-badge" data-style="hype">Hype</button>
                         </div>
                     </div>
 

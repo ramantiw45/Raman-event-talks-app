@@ -837,3 +837,93 @@ body.light-theme .logo-text h1 {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
+
+/* Clear Search Icon hover */
+.search-clear-icon:hover {
+    color: white !important;
+}
+body.light-theme .search-clear-icon:hover {
+    color: #0f172a !important;
+}
+
+/* Template Selectors UI */
+.template-selector-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.template-badges {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.template-badge {
+    flex: 1;
+    padding: 0.45rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: var(--transition-smooth);
+}
+
+.template-badge:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.template-badge.active {
+    background: rgba(29, 161, 242, 0.12);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+body.light-theme .template-badge {
+    background: rgba(15, 23, 42, 0.04);
+}
+
+body.light-theme .template-badge:hover {
+    background: rgba(15, 23, 42, 0.08);
+    color: #0f172a;
+}
+
+body.light-theme .template-badge.active {
+    background: rgba(29, 161, 242, 0.1);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+/* Pulsing Empty State */
+@keyframes contextPulse {
+    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.15); }
+    70% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+.selection-context.empty {
+    animation: contextPulse 2.5s infinite;
+}
+
+/* Text Highlighting */
+.highlight {
+    background-color: rgba(253, 224, 71, 0.3);
+    border-radius: 2px;
+    padding: 0 1px;
+    color: white;
+}
+body.light-theme .highlight {
+    background-color: rgba(234, 179, 8, 0.35);
+    color: #0f172a;
+}
+
+/* Focus Visible Keyboard outline rings */
+button:focus-visible, 
+input:focus-visible, 
+textarea:focus-visible {
+    outline: 2px solid var(--color-primary) !important;
+    outline-offset: 2px !important;
+}

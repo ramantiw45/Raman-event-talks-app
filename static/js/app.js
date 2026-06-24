@@ -1,6 +1,7 @@
 // Application State
 let allUpdates = []; // Flat list of all updates parsed from entries
 let selectedUpdateId = null;
+let currentTemplateStyle = 'detailed'; // Choose: detailed, punchy, hype
 
 // DOM Elements
 const feedContainer = document.getElementById('feed-container');
@@ -21,6 +22,8 @@ const contextTextPreview = composerContext.querySelector('.context-text-preview'
 const tagButtons = document.querySelectorAll('.tag-btn');
 const toast = document.getElementById('toast');
 const themeToggle = document.getElementById('theme-toggle');
+const searchClear = document.getElementById('search-clear');
+const fetchTime = document.getElementById('fetch-time');
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
@@ -53,7 +56,42 @@ function setupEventListeners() {
     });
 
     // Search input
-    searchInput.addEventListener('input', filterAndRenderFeed);
+    searchInput.addEventListener('input', () => {
+        if (searchInput.value.trim() !== '') {
+            searchClear.classList.remove('hidden');
+        } else {
+            searchClear.classList.add('hidden');
+        }
+        filterAndRenderFeed();
+    });
+
+    // Clear search button
+    if (searchClear) {
+        searchClear.addEventListener('click', () => {
+            searchInput.value = '';
+            searchClear.classList.add('hidden');
+            filterAndRenderFeed();
+            searchInput.focus();
+        });
+    }
+
+    // Esc key to clear search
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            searchInput.value = '';
+            if (searchClear) searchClear.classList.add('hidden');
+            filterAndRenderFeed();
+            searchInput.blur();
+        }
+    });
+
+    // Ctrl + Enter inside tweet textarea to publish
+    tweetTextarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            btnTweet.click();
+        }
+    });
 
     // Filter badges
     filterBadges.forEach(badge => {
@@ -118,6 +156,19 @@ function setupEventListeners() {
             }
         });
     }
+
+    // Tweet templates
+    const templateBadges = document.querySelectorAll('.template-badge');
+    templateBadges.forEach(badge => {
+        badge.addEventListener('click', () => {
+            templateBadges.forEach(b => b.classList.remove('active'));
+            badge.classList.add('active');
+            currentTemplateStyle = badge.dataset.style;
+            if (selectedUpdateId) {
+                selectUpdateForTweet(selectedUpdateId);
+            }
+        });
+    });
 }
 
 // Fetch release notes from backend Flask API
@@ -135,6 +186,13 @@ async function fetchReleaseNotes() {
         
         filterAndRenderFeed();
         showToast('Successfully updated feed!');
+
+        // Update fetch timestamp label
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        if (fetchTime) {
+            fetchTime.innerText = `Updated: ${timeStr}`;
+        }
     } catch (error) {
         console.error(error);
         showToast(error.message, true);
@@ -267,6 +325,7 @@ function renderFeed(updates) {
     
     // Sort dates or process in order of receipt (since RSS feeds are ordered chronologically descending already)
     const dates = Object.keys(groups);
+    const searchQuery = searchInput.value.toLowerCase().trim();
     
     dates.forEach(date => {
         html += `
@@ -278,6 +337,9 @@ function renderFeed(updates) {
             const colors = getTypeColor(update.type);
             const isSelected = selectedUpdateId === update.id;
             
+            // Highlight text if query is active
+            const displayHtml = highlightHTML(update.rawHtml, searchQuery);
+            
             html += `
                 <div class="update-card glass-card" style="--type-color: ${colors.hex}; --type-color-rgb: ${colors.rgb}" id="card-${update.id}">
                     <div class="card-top">
@@ -287,7 +349,7 @@ function renderFeed(updates) {
                         <span class="card-date">${update.date}</span>
                     </div>
                     <div class="update-content">
-                        ${update.rawHtml}
+                        ${displayHtml}
                     </div>
                     <div class="card-actions" style="gap: 0.5rem;">
                         <button class="btn btn-secondary" onclick="copyUpdateText('${update.id}', this)" title="Copy description to clipboard" style="padding: 0.4rem 0.75rem; font-size: 0.85rem;">
@@ -343,21 +405,48 @@ window.selectUpdateForTweet = function(id) {
     contextDate.innerText = update.date;
     contextTextPreview.innerText = update.plainText;
     
-    // Auto Draft Tweet body
-    // 280 characters limit:
-    // "BigQuery [Type]: [Text snippet...] #BigQuery #GoogleCloud [Link]"
-    const prefix = `BigQuery ${update.type}: `;
-    const link = `\nRelease details: ${update.link}`;
-    const tags = ` #BigQuery #GoogleCloud`;
+    // Auto Draft Tweet body depending on currentTemplateStyle
+    let tweetDraft = '';
     
-    // Calculate remaining chars for text snippet
-    const maxSnippetLen = 280 - prefix.length - link.length - tags.length - 5; // safety buffer
-    let snippet = update.plainText;
-    if (snippet.length > maxSnippetLen) {
-        snippet = snippet.substring(0, maxSnippetLen).trim() + '...';
+    if (currentTemplateStyle === 'punchy') {
+        const prefix = `⚡ New BigQuery ${update.type}! `;
+        const link = `\nDetails: ${update.link}`;
+        const tags = ` #GCP`;
+        
+        // Take the first sentence
+        const firstSentence = update.plainText.split(/[.!?]/)[0] + '.';
+        const maxSnippetLen = 280 - prefix.length - link.length - tags.length - 5;
+        let snippet = firstSentence;
+        if (snippet.length > maxSnippetLen) {
+            snippet = snippet.substring(0, maxSnippetLen).trim() + '...';
+        }
+        tweetDraft = `${prefix}${snippet}${tags}${link}`;
+    } else if (currentTemplateStyle === 'hype') {
+        const prefix = `🚀 BIGQUERY UPDATE: `;
+        const link = `\n👉 Read more: ${update.link}`;
+        const tags = ` #BigQuery #GoogleCloud #DataEngineering`;
+        
+        const maxSnippetLen = 280 - prefix.length - link.length - tags.length - 5;
+        let snippet = update.plainText;
+        if (snippet.length > maxSnippetLen) {
+            snippet = snippet.substring(0, maxSnippetLen).trim() + '...';
+        }
+        tweetDraft = `${prefix}${snippet}${tags}${link}`;
+    } else {
+        // Detailed (default)
+        const prefix = `BigQuery ${update.type}: `;
+        const link = `\nRelease details: ${update.link}`;
+        const tags = ` #BigQuery #GoogleCloud`;
+        
+        const maxSnippetLen = 280 - prefix.length - link.length - tags.length - 5;
+        let snippet = update.plainText;
+        if (snippet.length > maxSnippetLen) {
+            snippet = snippet.substring(0, maxSnippetLen).trim() + '...';
+        }
+        tweetDraft = `${prefix}${snippet}${tags}${link}`;
     }
     
-    tweetTextarea.value = `${prefix}${snippet}${tags}${link}`;
+    tweetTextarea.value = tweetDraft;
     updateTweetPreview();
     
     // Scroll composer into view on mobile
@@ -504,4 +593,45 @@ function exportFilteredToCSV() {
     document.body.removeChild(link);
     
     showToast('CSV export downloaded!');
+}
+
+// Highlight matching search words in HTML content
+function highlightHTML(html, query) {
+    if (!query) return html;
+    
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    
+    const walk = document.createTreeWalker(temp, NodeFilter.SHOW_TEXT, null, false);
+    let node;
+    const nodesToReplace = [];
+    
+    while (node = walk.nextNode()) {
+        const text = node.nodeValue;
+        const index = text.toLowerCase().indexOf(query.toLowerCase());
+        if (index >= 0) {
+            nodesToReplace.push(node);
+        }
+    }
+    
+    nodesToReplace.forEach(node => {
+        const parent = node.parentNode;
+        const text = node.nodeValue;
+        const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+        const newHtml = text.replace(regex, '<span class="highlight">$1</span>');
+        const wrapper = document.createElement('span');
+        wrapper.innerHTML = newHtml;
+        
+        while (wrapper.firstChild) {
+            parent.insertBefore(wrapper.firstChild, node);
+        }
+        parent.removeChild(node);
+    });
+    
+    return temp.innerHTML;
+}
+
+// Utility regex character escaping
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
